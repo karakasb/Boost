@@ -29,9 +29,24 @@ if [ -z "${BOOST_DIR}" ]; then
                 break
             fi
         done
-        if [ -n "$BOOST_DIR" ]; then
-            break
+        if [ -z "$BOOST_DIR" ]; then
+            continue
         fi
+
+        if [ -d "$dir/lib64" ]; then
+            BOOST_LIB_DIRS="$dir/lib64"
+        else
+            BOOST_LIB_DIRS="$dir/lib"
+        fi
+
+        if ! ls "$BOOST_LIB_DIRS"/libboost_system.* >/dev/null 2>&1 || \
+           ! ls "$BOOST_LIB_DIRS"/libboost_filesystem.* >/dev/null 2>&1; then
+            unset BOOST_DIR
+            unset BOOST_LIB_DIRS
+            continue
+        fi
+
+        break
     done
 
     if [ -z "$BOOST_DIR" ]; then
@@ -61,7 +76,7 @@ then
     # Set locations
     THORN=Boost
     #NAME=boost_1_54_0
-    NAME=boost_1_55_0
+    NAME=boost_1_88_0
     SRCDIR=$(dirname $0)
     BUILD_DIR=${SCRATCH_BUILD}/build/${THORN}
     if [ -z "${BOOST_INSTALL_DIR}" ]; then
@@ -75,7 +90,7 @@ then
     DONE_FILE=${SCRATCH_BUILD}/done/${THORN}
     BOOST_DIR=${INSTALL_DIR}
     
-    if [ -e ${DONE_FILE} -a ${DONE_FILE} -nt ${SRCDIR}/dist/${NAME}.tar.gz \
+    if [ -e ${DONE_FILE} -a ${DONE_FILE} -nt ${SRCDIR}/dist/${NAME}.tar.bz2 \
                          -a ${DONE_FILE} -nt ${SRCDIR}/configure.sh ]
     then
         echo "BEGIN MESSAGE"
@@ -108,7 +123,7 @@ then
 
         echo "Boost: Unpacking archive..."
         pushd ${BUILD_DIR}
-        ${TAR?} xzf ${SRCDIR}/dist/${NAME}.tar.gz
+        ${TAR?} xjf ${SRCDIR}/dist/${NAME}.tar.bz2
 
         echo "Boost: Configuring..."
         cd ${NAME}
